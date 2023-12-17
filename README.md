@@ -1,4 +1,5 @@
 # Projet INF4042 : Numerical in Python
+#### Réalisé par Alexis Avenel, Jonas Cholet, Martin Ledroit et Nicolas Nadé
 
 ## Objectif
 Optimisation combinatoire pour organiser une fête.
