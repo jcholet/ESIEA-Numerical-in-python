@@ -1,4 +1,4 @@
-# Projet INF4042 : Numercial in Python
+# Projet INF4042 : Numerical in Python
 
 ## Objectif
 Optimisation combinatoire pour organiser une fête.
