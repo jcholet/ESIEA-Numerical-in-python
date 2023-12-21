@@ -14,7 +14,7 @@ class TabuSearch:
         self.tabu_list = []
         self.tabu_list_size = tabu_list_size
 
-    def run(self, max_iterations=5):
+    def run(self, max_iterations=20):
         for i in range(max_iterations):
             neighbors, indexes_of_i_for_neighbors = self.get_neighborhood(self.current_solution)
             solutions = []
@@ -125,7 +125,7 @@ def greedy_for_repairing(child, friendships, invited):
     return child
 
 
-def gloutonRandomise(interests, friendships):
+def randomized_greedy(interests, friendships):
     interests = copy.deepcopy(interests)
     invited_guests = set()
     possible_guests = set(interests.keys())
@@ -148,7 +148,7 @@ def initial_population(size, interests, friendships):
     population.append(initial_solution)
     
     for _ in range(1, size):
-        random_solution = gloutonRandomise(interests, friendships)
+        random_solution = randomized_greedy(interests, friendships)
         population.append(random_solution)
     return population
 
@@ -252,14 +252,14 @@ def crossover_and_mutate(crossover_prob, parent_1, parent_2):
     child_2 = mutation(child_2)
     return child_1, child_2
 
-def tabu_list_for_child(child, tabu_list_size, friendships):
-    child_to_boolean_vector = [1 if child[i]["invited"] else 0 for i in range(len(child))]
-    tabu_search_for_child = TabuSearch(child_to_boolean_vector, child,
+def tabu_search(individual, tabu_list_size, friendships):
+    individual_to_boolean_vector = [1 if individual[i]["invited"] else 0 for i in range(len(individual))]
+    tabu_search_for_individual = TabuSearch(individual_to_boolean_vector, individual,
                                         friendships, tabu_list_size=tabu_list_size)
-    child_solution = tabu_search_for_child.run()
-    boolean_to_child = {i: {'interest': child[i]['interest'], 'invited': bool(child_solution[i]), 'errors': 0} for i in child}
+    individual_solution = tabu_search_for_individual.run()
+    boolean_to_individual = {i: {'interest': individual[i]['interest'], 'invited': bool(individual_solution[i]), 'errors': 0} for i in individual}
 
-    return boolean_to_child
+    return boolean_to_individual
 
 
 def genetic_algorithm(filename, duration=60, T=400, T_prime=100, crossover_prob=0.8):
@@ -269,11 +269,9 @@ def genetic_algorithm(filename, duration=60, T=400, T_prime=100, crossover_prob=
     population = initial_population(T, interests, friendships)
     f_best = max([evaluate(individual) for individual in population])
     
-    print("Meilleur score initial :", f_best)
     elapsed_time = 0
     iteration = 0
     while elapsed_time < duration:
-        print("Iteration :", iteration)
         M = selection_reproduction(population, T_prime)
         population_T = copy.deepcopy(M)
         population_T_prime = []
@@ -287,28 +285,41 @@ def genetic_algorithm(filename, duration=60, T=400, T_prime=100, crossover_prob=
                 parent_2 = random.choice(population_T)
                 population_T.remove(parent_2)
 
+                # Perform crossover and mutation on parent individuals
                 child_1, child_2 = crossover(crossover_prob, parent_1, parent_2)
                 future = executor.submit(mutation, child_1)
                 future_2 = executor.submit(mutation, child_2)
                 child_1 = future.result()
                 child_2 = future_2.result()
 
+                # Perform repair on the mutated children
                 future = executor.submit(repair, friendships, child_1)
                 future_2 = executor.submit(repair, friendships, child_2)
                 child_1 = future.result()
                 child_2 = future.result()
-               
-                future = executor.submit(tabu_list_for_child, child_1, tabu_list_size, friendships)
-                future_2 = executor.submit(tabu_list_for_child, child_2, tabu_list_size, friendships)
-                boolean_to_child_1 = future.result()
-                boolean_to_child_2 = future_2.result()
 
-                population_T_prime.append(boolean_to_child_1)
-                population_T_prime.append(boolean_to_child_2)
+                # Select the best child based on evaluation score
+                best_child = max([child_1, child_2], key=lambda x: evaluate(x))
+                is_child_1 = best_child == child_1
+
+                # Perform tabu search on the best child
+                future = executor.submit(tabu_search, best_child, tabu_list_size, friendships)
+                best_child = future.result()
+
+                # Update the child based on the result of tabu search
+                if is_child_1:
+                    child_1 = best_child
+                else:
+                    child_2 = best_child
+
+
+                population_T_prime.append(child_1)
+                population_T_prime.append(child_2)
         
         population = population + population_T_prime
         population = population + M
         f_best_prime = max([evaluate(individual) for individual in population])
+
         if f_best < f_best_prime:
             f_best = f_best_prime
         population = selection_survival(population, T)
@@ -322,7 +333,7 @@ def genetic_algorithm(filename, duration=60, T=400, T_prime=100, crossover_prob=
         if eval > best_interest:
             best_interest  = evaluate(individual)
             best_solution = [i for i in individual if individual[i]['invited'] == True]
-    print("Meilleure solution :", best_solution)
+
     return f_best
 
 if __name__ == "__main__":

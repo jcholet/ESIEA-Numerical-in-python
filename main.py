@@ -268,12 +268,17 @@ def genetic_algorithm(filename, duration=40, T=400, T_prime=100, crossover_prob=
 
     return best_solution_to_boolean_vector, best_interest
 
-# Get the path to the file to open, time limit from command line arguments
+# Get the path to the file to open, time limit, and path to the file to write from command line arguments
 time_limit = int(sys.argv[1])
 path_to_file_to_open = sys.argv[2]
+path_to_file_to_write = sys.argv[3]
 
 # Run the genetic algorithm and get the best solution and interest
 best_solution, best_interest = genetic_algorithm(path_to_file_to_open, duration=time_limit)
 
 # Print the best interest found
 print(f"Best interest found: {best_interest}")
+
+# Write the best solution to the file
+with open(path_to_file_to_write, 'w') as file:
+    file.write(" ".join(map(str, best_solution)))
