@@ -270,7 +270,6 @@ def genetic_algorithm(filename, duration=60, T=400, T_prime=100, crossover_prob=
     f_best = max([evaluate(individual) for individual in population])
     
     elapsed_time = 0
-    iteration = 0
     while elapsed_time < duration:
         M = selection_reproduction(population, T_prime)
         population_T = copy.deepcopy(M)
@@ -324,16 +323,7 @@ def genetic_algorithm(filename, duration=60, T=400, T_prime=100, crossover_prob=
             f_best = f_best_prime
         population = selection_survival(population, T)
         elapsed_time = time.time() - start_time
-        iteration += 1
     
-    best_interest = 0
-    best_solution = []
-    for individual in population:
-        eval = evaluate(individual)
-        if eval > best_interest:
-            best_interest  = evaluate(individual)
-            best_solution = [i for i in individual if individual[i]['invited'] == True]
-
     return f_best
 
 if __name__ == "__main__":

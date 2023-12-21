@@ -254,26 +254,14 @@ def genetic_algorithm(filename, duration=40, T=400, T_prime=100, crossover_prob=
         population = selection_survival(population, T)
         elapsed_time = time.time() - start_time
     
-    # The algorithm selects the best solution and interest found in the final population.
-    best_interest = 0
-    best_solution = []
-    for individual in population:
-        eval = evaluate(individual)
-        if eval > best_interest:
-            best_interest  = evaluate(individual)
-            best_solution = [i for i in individual if individual[i]['invited'] == True]
-    
-    # The best solution is converted to a boolean vector representation.
-    best_solution_to_boolean_vector = [1 if i in best_solution else 0 for i in range(N)]
-
-    return best_solution_to_boolean_vector, best_interest
+    return f_best
 
 # Get the path to the file to open, time limit from command line arguments
 time_limit = int(sys.argv[1])
 path_to_file_to_open = sys.argv[2]
 
 # Run the genetic algorithm and get the best solution and interest
-best_solution, best_interest = genetic_algorithm(path_to_file_to_open, duration=time_limit)
+best_interest = genetic_algorithm(path_to_file_to_open, duration=time_limit)
 
 # Print the best interest found
 print(f"Best interest found: {best_interest}")

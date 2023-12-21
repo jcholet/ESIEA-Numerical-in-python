@@ -213,7 +213,8 @@ def genetic_algorithm(filename, duration=40, T=400, T_prime=100, crossover_prob=
     start_time = time.time()
     N, interests, friendships = read_input(filename)
     population = initial_population(T, interests, friendships)
-    f_best = max([evaluate(individual) for individual in population])
+    f_best_solution = max([individual for individual in population], key=lambda x: evaluate(x))
+    f_best = evaluate(f_best_solution)
     
     elapsed_time = 0
     # The algorithm runs until the elapsed time exceeds the specified duration.
@@ -248,25 +249,23 @@ def genetic_algorithm(filename, duration=40, T=400, T_prime=100, crossover_prob=
         # The algorithm updates the population by adding the new children.
         population = population + population_T_prime
         population = population + M
-        f_best_prime = max([evaluate(individual) for individual in population])
+
+        # Calculating the best solution and interest in the population
+        f_best_prime_solution = max([individual for individual in population], key=lambda x: evaluate(x))
+        f_best_prime = evaluate(f_best_prime_solution)
+        
+        # Updating the best solution and interest if the new solution is better
         if f_best < f_best_prime:
             f_best = f_best_prime
+            f_best_solution = f_best_prime_solution
+
         population = selection_survival(population, T)
         elapsed_time = time.time() - start_time
     
-    # The algorithm selects the best solution and interest found in the final population.
-    best_interest = 0
-    best_solution = []
-    for individual in population:
-        eval = evaluate(individual)
-        if eval > best_interest:
-            best_interest  = evaluate(individual)
-            best_solution = [i for i in individual if individual[i]['invited'] == True]
-    
-    # The best solution is converted to a boolean vector representation.
-    best_solution_to_boolean_vector = [1 if i in best_solution else 0 for i in range(N)]
+    # Converting the best solution to a boolean vector
+    best_solution_to_boolean_vector = [1 if f_best_solution[i]['invited'] else 0 for i in range(N)]
 
-    return best_solution_to_boolean_vector, best_interest
+    return best_solution_to_boolean_vector, f_best
 
 # Get the path to the file to open, time limit, and path to the file to write from command line arguments
 time_limit = int(sys.argv[1])
