@@ -26,3 +26,6 @@ Optimisation combinatoire pour organiser une fête.
 
 ## Rapport
 Rédiger un rapport de 10 pages sur la modélisation, mise en œuvre, tests, résultats et interprétations.
+
+## Note finale
+20/20
